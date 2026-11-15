@@ -1,0 +1,9 @@
+# only the public listing data is published from data/
+data/*
+!data/bursa_listed_companies.csv
+!data/bursa_excluded_securities.csv
+# Power BI local cache/settings
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+.DS_Store
+~$*
