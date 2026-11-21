@@ -5,11 +5,11 @@ table Listings
 		formatString: #,0
 		lineageTag: 63982f54-f6cc-52f1-9544-6b863437282b
 
-	measure 'Company Listings' = CALCULATE ( [Listed Entities], Listings[Entity Type] = "Company" )
+	measure 'Company Listings' = CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Entity Type] = "Company" ) )
 		formatString: #,0
 		lineageTag: 44e2a45c-a7b0-5156-80df-3fbb5550ad3b
 
-	measure 'Non-Company Entities' = CALCULATE ( [Listed Entities], Listings[Entity Type] <> "Company" ) + 0
+	measure 'Non-Company Entities' = CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Entity Type] <> "Company" ) ) + 0
 		formatString: #,0
 		lineageTag: cad30733-3f70-55fe-9f3b-2087d01b11b3
 
@@ -17,11 +17,11 @@ table Listings
 		formatString: #,0
 		lineageTag: 78cd36a8-68ff-5c49-b5dc-bdf584cb222a
 
-	measure 'Shariah-Compliant' = CALCULATE ( [Listed Entities], Listings[Shariah Compliant] = "Yes" )
+	measure 'Shariah-Compliant' = CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Shariah Compliant] = "Yes" ) )
 		formatString: #,0
 		lineageTag: a2500865-152c-5269-a876-e22d7532d068
 
-	measure 'Shariah-Compliant %' = DIVIDE ( [Shariah-Compliant], [Listed Entities] )
+	measure 'Shariah-Compliant %' = DIVIDE ( [Shariah-Compliant] + 0, [Listed Entities] )
 		formatString: 0%
 		lineageTag: 08e32f52-2644-535e-818c-56d8aaff82eb
 
@@ -33,7 +33,7 @@ table Listings
 		formatString: 0
 		lineageTag: a48a33e4-6fb4-531a-9804-7dfaff8c7122
 
-	measure 'Main Market Listings' = CALCULATE ( [Listed Entities], Listings[Market] = "Main Market" )
+	measure 'Main Market Listings' = CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Market] = "Main Market" ) ) + 0
 		formatString: #,0
 		lineageTag: 5cc59636-8fc1-5106-a316-9bc2855bf762
 
@@ -47,7 +47,7 @@ table Listings
 	measure 'KPI Sub Listed' = FORMAT ( [Company Listings] + 0, "#,0" ) & " companies   ·   " & FORMAT ( [Non-Company Entities] + 0, "#,0" ) & " other entities"
 		lineageTag: 9379c25e-6c8f-57df-931a-69202edad92f
 
-	measure 'KPI Sub Markets' = "ACE " & FORMAT ( CALCULATE ( [Listed Entities], Listings[Market] = "ACE Market" ) + 0, "#,0" ) & "   ·   LEAP " & FORMAT ( CALCULATE ( [Listed Entities], Listings[Market] = "LEAP Market" ) + 0, "#,0" )
+	measure 'KPI Sub Markets' = "ACE " & FORMAT ( CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Market] = "ACE Market" ) ) + 0, "#,0" ) & "   ·   LEAP " & FORMAT ( CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Market] = "LEAP Market" ) ) + 0, "#,0" )
 		lineageTag: ba4b0cc8-4715-592c-89bf-895d214295e6
 
 	measure 'KPI Sub Sectors' = VAR top1 = TOPN ( 1, VALUES ( Listings[Sector] ), [Listed Entities], DESC ) VAR nm = MAXX ( top1, Listings[Sector] ) RETURN "largest: " & IF ( LEN ( nm ) > 16, LEFT ( nm, 15 ) & "…", nm ) & " (" & FORMAT ( MAXX ( top1, [Listed Entities] ), "#,0" ) & ")"
@@ -56,7 +56,7 @@ table Listings
 	measure 'KPI Sub Shariah' = FORMAT ( [Shariah-Compliant] + 0, "#,0" ) & " of " & FORMAT ( [Listed Entities] + 0, "#,0" ) & " listings"
 		lineageTag: c17cc0a9-6405-5817-b2db-a8a8758649d8
 
-	measure 'KPI Sub NonCo' = FORMAT ( CALCULATE ( [Listed Entities], Listings[Entity Type] = "REIT" ) + 0, "#,0" ) & " REITs   ·   " & FORMAT ( CALCULATE ( [Listed Entities], NOT Listings[Entity Type] IN { "Company", "REIT" } ) + 0, "#,0" ) & " trusts & funds"
+	measure 'KPI Sub NonCo' = FORMAT ( CALCULATE ( [Listed Entities], KEEPFILTERS ( Listings[Entity Type] = "REIT" ) ) + 0, "#,0" ) & " REITs   ·   " & FORMAT ( CALCULATE ( [Listed Entities], KEEPFILTERS ( NOT Listings[Entity Type] IN { "Company", "REIT" } ) ) + 0, "#,0" ) & " trusts & funds"
 		lineageTag: 4ad98d82-d94e-508a-a48d-56b8d6975c36
 
 	column 'Stock Code'
