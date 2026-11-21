@@ -1,0 +1,145 @@
+table Listings
+	lineageTag: a7891b54-17d6-57df-9a21-091be6cbff3b
+
+	measure 'Listed Entities' = COUNTROWS ( Listings )
+		formatString: #,0
+		lineageTag: 63982f54-f6cc-52f1-9544-6b863437282b
+
+	measure 'Company Listings' = CALCULATE ( [Listed Entities], Listings[Entity Type] = "Company" )
+		formatString: #,0
+		lineageTag: 44e2a45c-a7b0-5156-80df-3fbb5550ad3b
+
+	measure 'Non-Company Entities' = CALCULATE ( [Listed Entities], Listings[Entity Type] <> "Company" ) + 0
+		formatString: #,0
+		lineageTag: cad30733-3f70-55fe-9f3b-2087d01b11b3
+
+	measure Sectors = DISTINCTCOUNT ( Listings[Sector] )
+		formatString: #,0
+		lineageTag: 78cd36a8-68ff-5c49-b5dc-bdf584cb222a
+
+	measure 'Shariah-Compliant' = CALCULATE ( [Listed Entities], Listings[Shariah Compliant] = "Yes" )
+		formatString: #,0
+		lineageTag: a2500865-152c-5269-a876-e22d7532d068
+
+	measure 'Shariah-Compliant %' = DIVIDE ( [Shariah-Compliant], [Listed Entities] )
+		formatString: 0%
+		lineageTag: 08e32f52-2644-535e-818c-56d8aaff82eb
+
+	measure '% of All Listings' = DIVIDE ( [Listed Entities], CALCULATE ( [Listed Entities], ALL ( Listings ) ) )
+		formatString: 0.0%
+		lineageTag: 200fab24-c66a-50bb-91fa-c1395da46884
+
+	measure 'Code Rule Exceptions' = CALCULATE ( [Listed Entities], Listings[Code Rule] = "Check" ) + 0
+		formatString: 0
+		lineageTag: a48a33e4-6fb4-531a-9804-7dfaff8c7122
+
+	measure 'Main Market Listings' = CALCULATE ( [Listed Entities], Listings[Market] = "Main Market" )
+		formatString: #,0
+		lineageTag: 5cc59636-8fc1-5106-a316-9bc2855bf762
+
+	measure 'Listing Name' = SELECTEDVALUE ( Listings[Company Name], "Several listings" )
+		lineageTag: 3f31cb50-f057-50a1-9b4e-42ba1530faec
+
+	measure 'Shariah Badge' = IF ( HASONEVALUE ( Listings[Stock Code] ), VAR y = SELECTEDVALUE ( Listings[Shariah Compliant] ) = "Yes" RETURN "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='104' height='20' viewBox='0 0 104 20'><rect x='1' y='1' width='102' height='18' rx='9' fill='" & IF ( y, "%231FBF7A", "none" ) & "' stroke='" & IF ( y, "%231FBF7A", "%236A8378" ) & "'/><text x='52' y='14' font-family='Segoe UI' font-size='10.5' font-weight='700' text-anchor='middle' fill='" & IF ( y, "%23062016", "%236A8378" ) & "'>" & IF ( y, "SHARIAH", "NON-SHARIAH" ) & "</text></svg>" )
+		dataCategory: ImageUrl
+		lineageTag: ace42838-fd9e-5011-a9e0-c8866856f780
+
+	measure 'KPI Sub Listed' = FORMAT ( [Company Listings] + 0, "#,0" ) & " companies   ·   " & FORMAT ( [Non-Company Entities] + 0, "#,0" ) & " other entities"
+		lineageTag: 9379c25e-6c8f-57df-931a-69202edad92f
+
+	measure 'KPI Sub Markets' = "ACE " & FORMAT ( CALCULATE ( [Listed Entities], Listings[Market] = "ACE Market" ) + 0, "#,0" ) & "   ·   LEAP " & FORMAT ( CALCULATE ( [Listed Entities], Listings[Market] = "LEAP Market" ) + 0, "#,0" )
+		lineageTag: ba4b0cc8-4715-592c-89bf-895d214295e6
+
+	measure 'KPI Sub Sectors' = VAR top1 = TOPN ( 1, VALUES ( Listings[Sector] ), [Listed Entities], DESC ) VAR nm = MAXX ( top1, Listings[Sector] ) RETURN "largest: " & IF ( LEN ( nm ) > 16, LEFT ( nm, 15 ) & "…", nm ) & " (" & FORMAT ( MAXX ( top1, [Listed Entities] ), "#,0" ) & ")"
+		lineageTag: 8977cbed-2830-5565-a397-40c498b2576c
+
+	measure 'KPI Sub Shariah' = FORMAT ( [Shariah-Compliant] + 0, "#,0" ) & " of " & FORMAT ( [Listed Entities] + 0, "#,0" ) & " listings"
+		lineageTag: c17cc0a9-6405-5817-b2db-a8a8758649d8
+
+	measure 'KPI Sub NonCo' = FORMAT ( CALCULATE ( [Listed Entities], Listings[Entity Type] = "REIT" ) + 0, "#,0" ) & " REITs   ·   " & FORMAT ( CALCULATE ( [Listed Entities], NOT Listings[Entity Type] IN { "Company", "REIT" } ) + 0, "#,0" ) & " trusts & funds"
+		lineageTag: 4ad98d82-d94e-508a-a48d-56b8d6975c36
+
+	column 'Stock Code'
+		dataType: string
+		lineageTag: 218021b5-5f35-5b2a-b734-2f29e8505daa
+		summarizeBy: none
+		sourceColumn: Stock Code
+
+	column 'Company Name'
+		dataType: string
+		lineageTag: 633cec5f-ce7b-5aa9-9841-a24160675d1a
+		summarizeBy: none
+		sourceColumn: Company Name
+
+	column 'Stock Name'
+		dataType: string
+		lineageTag: 1cafc9ca-2f33-54dc-b214-466747fa3923
+		summarizeBy: none
+		sourceColumn: Stock Name
+
+	column Market
+		dataType: string
+		lineageTag: db769759-7713-5966-856d-04f56074b4c0
+		summarizeBy: none
+		sourceColumn: Market
+		sortByColumn: 'Market Order'
+
+	column Sector
+		dataType: string
+		lineageTag: d3fa5eb8-91dd-5334-9841-7868dc5ba244
+		summarizeBy: none
+		sourceColumn: Sector
+
+	column 'Entity Type'
+		dataType: string
+		lineageTag: 8632b694-023d-50b6-b63b-673b4ae111f3
+		summarizeBy: none
+		sourceColumn: Entity Type
+
+	column 'Shariah Compliant'
+		dataType: string
+		lineageTag: 21d53c1e-2231-5066-a924-ca9da5deccad
+		summarizeBy: none
+		sourceColumn: Shariah Compliant
+
+	column 'Bursa Profile URL'
+		dataType: string
+		dataCategory: WebUrl
+		lineageTag: f4456dd3-b46a-545a-8f48-e2ba567845e0
+		summarizeBy: none
+		sourceColumn: Bursa Profile URL
+
+	column 'Market Order'
+		dataType: int64
+		formatString: 0
+		isHidden
+		lineageTag: 413fb5ea-15bd-5f59-89d0-193722cac15b
+		summarizeBy: none
+		sourceColumn: Market Order
+
+	column 'Code Rule'
+		dataType: string
+		lineageTag: ea95e3ef-a708-5a25-aa4f-58a77f4e42ef
+		summarizeBy: none
+		sourceColumn: Code Rule
+
+	partition Listings = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(Web.Contents(DataFolder & "bursa_listed_companies.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Blanks = Promoted,
+				    Typed = Table.TransformColumnTypes(Blanks, {{"Stock Code", type text}, {"Company Name", type text}, {"Stock Name", type text}, {"Market", type text}, {"Sector", type text}, {"Entity Type", type text}, {"Shariah Compliant", type text}, {"Bursa Profile URL", type text}}, "en-US"),
+				    MarketOrder = Table.AddColumn(Typed, "Market Order", each if [Market] = "Main Market" then 1 else if [Market] = "ACE Market" then 2 else if [Market] = "LEAP Market" then 3 else 9, Int64.Type),
+				    IsDigits = (code as text) as logical => Text.Select(code, {"0".."9"}) = code,
+				    CodeRule = Table.AddColumn(MarketOrder, "Code Rule", each
+				        if [Stock Code] = "5235SS" then "Stapled security (named exception)"
+				        else if not IsDigits([Stock Code]) then "Check"
+				        else if Text.Length([Stock Code]) = 4 and [Market] <> "LEAP Market" then "4-digit code (Main / ACE)"
+				        else if Text.Length([Stock Code]) = 5 and [Market] = "LEAP Market" then "5-digit code (LEAP)"
+				        else "Check", type text)
+				in
+				    CodeRule
+
+	annotation PBI_ResultType = Table

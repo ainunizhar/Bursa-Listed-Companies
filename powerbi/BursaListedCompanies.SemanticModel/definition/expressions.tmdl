@@ -1,4 +1,0 @@
-expression DataFolder = "https://raw.githubusercontent.com/ainunizhar/Bursa-Listed-Companies/main/data/" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
-	lineageTag: 8db4a7b8-36f4-52b0-9851-be73e8b77720
-
-	annotation PBI_ResultType = Text

@@ -1,0 +1,103 @@
+table ExcludedSecurities
+	lineageTag: 966c63b0-2964-5b49-b61d-d04d6d88ccaf
+
+	measure 'Excluded Securities' = COUNTROWS ( ExcludedSecurities )
+		formatString: #,0
+		lineageTag: 814efbfa-e950-5bb2-a4e2-6cbd0bbeef2a
+
+	measure Warrants = CALCULATE ( [Excluded Securities], ExcludedSecurities[Security Type] = "Warrant" )
+		formatString: #,0
+		lineageTag: 6f59230f-1e94-5b48-9524-023f062d8af9
+
+	measure 'Preference Shares' = CALCULATE ( [Excluded Securities], ExcludedSecurities[Security Type] = "Preference Shares" )
+		formatString: #,0
+		lineageTag: d911d4eb-fdd3-5287-bb29-84b42ab9d96a
+
+	measure 'Rights Entitlements' = CALCULATE ( [Excluded Securities], ExcludedSecurities[Security Type] = "Rights Entitlement" )
+		formatString: #,0
+		lineageTag: 7a05a948-01b7-5ccb-bcff-ec60c163e24f
+
+	measure 'Listings With Other Securities' = DISTINCTCOUNT ( ExcludedSecurities[Parent Stock Code] )
+		formatString: #,0
+		lineageTag: e998f5d7-25e2-5b88-9b92-05a88dfe626a
+
+	measure 'Parent Found %' = DIVIDE ( COUNTROWS ( FILTER ( ExcludedSecurities, NOT ISBLANK ( RELATED ( Listings[Stock Code] ) ) ) ), [Excluded Securities] )
+		formatString: 0%
+		lineageTag: af594132-bc6b-5779-b36d-b3dc24b4b3b6
+
+	measure 'Other Securities' = [Excluded Securities] + 0
+		formatString: #,0
+		lineageTag: 8b9eca4e-9e79-5d3e-a324-1a3c3fc9a002
+
+	measure 'KPI Sub Excluded' = FORMAT ( [Warrants] + 0, "#,0" ) & " warrants  ·  " & FORMAT ( [Preference Shares] + 0, "#,0" ) & " pref  ·  " & FORMAT ( [Rights Entitlements] + 0, "#,0" ) & " rights"
+		lineageTag: 83e721b3-bb49-58be-92a3-b644396d97d8
+
+	measure 'KPI Sub Rules' = "Securities kept out of the company universe   ·   " & FORMAT ( [Parent Found %], "0%" ) & " matched to a listed parent"
+		lineageTag: 8d50e062-84d0-5ca2-a761-8249123c90e3
+
+	column 'Stock Code'
+		dataType: string
+		lineageTag: 0d4c5606-0f58-5dde-9044-8fa0e61ff0b6
+		summarizeBy: none
+		sourceColumn: Stock Code
+
+	column 'Stock Name'
+		dataType: string
+		lineageTag: 324d1bb2-e7fd-569a-90b9-39b9f72b1368
+		summarizeBy: none
+		sourceColumn: Stock Name
+
+	column Market
+		dataType: string
+		lineageTag: 6a691262-ad11-5343-9d27-03dc5171f85e
+		summarizeBy: none
+		sourceColumn: Market
+		sortByColumn: 'Market Order'
+
+	column Sector
+		dataType: string
+		lineageTag: e3bcbd00-e630-57aa-b370-2df37c689422
+		summarizeBy: none
+		sourceColumn: Sector
+
+	column 'Security Type'
+		dataType: string
+		lineageTag: 91fdaf9d-d29e-5e9c-b078-15d616c19c59
+		summarizeBy: none
+		sourceColumn: Security Type
+
+	column 'Why Excluded'
+		dataType: string
+		lineageTag: fa55e4fa-b37f-5de7-b4ac-f466c000d950
+		summarizeBy: none
+		sourceColumn: Why Excluded
+
+	column 'Market Order'
+		dataType: int64
+		formatString: 0
+		isHidden
+		lineageTag: 888fff2f-97e1-5074-9e86-6eebebf71998
+		summarizeBy: none
+		sourceColumn: Market Order
+
+	column 'Parent Stock Code'
+		dataType: string
+		lineageTag: c38a9cea-b17c-5eae-a82b-634cf7b2174f
+		summarizeBy: none
+		sourceColumn: Parent Stock Code
+
+	partition ExcludedSecurities = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(Web.Contents(DataFolder & "bursa_excluded_securities.csv"), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Blanks = Promoted,
+				    Typed = Table.TransformColumnTypes(Blanks, {{"Stock Code", type text}, {"Stock Name", type text}, {"Market", type text}, {"Sector", type text}, {"Security Type", type text}, {"Why Excluded", type text}}, "en-US"),
+				    MarketOrder = Table.AddColumn(Typed, "Market Order", each if [Market] = "Main Market" then 1 else if [Market] = "ACE Market" then 2 else if [Market] = "LEAP Market" then 3 else 9, Int64.Type),
+				    Parent = Table.AddColumn(MarketOrder, "Parent Stock Code", each
+				        Text.Start([Stock Code], if [Market] = "LEAP Market" then 5 else 4), type text)
+				in
+				    Parent
+
+	annotation PBI_ResultType = Table
